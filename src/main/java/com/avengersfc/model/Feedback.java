@@ -1,4 +1,4 @@
-package com.avengersfc;
+package com.avengersfc.model;
 
 public class Feedback {
     private Integer id;
