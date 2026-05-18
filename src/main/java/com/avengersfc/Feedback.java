@@ -1,22 +1,22 @@
 package com.avengersfc;
 
 public class Feedback {
-    private int id;
+    private Integer id;
     private String content;
 
     public Feedback() {
     }
 
-    public Feedback(int id, String content) {
+    public Feedback(Integer id, String content) {
         this.id = id;
         this.content = content;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
