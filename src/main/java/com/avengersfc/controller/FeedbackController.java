@@ -1,10 +1,7 @@
 package com.avengersfc.controller;
 
 import com.avengersfc.model.Feedback;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +25,17 @@ public class FeedbackController {
     }
 
     @GetMapping("/feedback")
-    public List<Feedback> getAllFeedbacks(){
+    public List<Feedback> getAllFeedbacks() {
         return feedbackList;
+    }
+
+    @GetMapping("/feedback/{id}")
+    public Feedback getFeedbackByID(@PathVariable int id) {
+        for (Feedback feedback : feedbackList) {
+            if (feedback.getId() == id) {
+                return feedback;
+            }
+        }
+        return null;
     }
 }
