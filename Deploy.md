@@ -1,30 +1,70 @@
-# Oracle Linux Deployment
+# Oracle Linux Deployment Guide
 
-This section explains how the Coffee-Corner Feedback API was deployed on Oracle Linux using a Spring Boot JAR file.
+This document explains how the Coffee Feedback API was deployed and tested on Oracle Linux.
 
 ---
 
-## Step 1: Build the JAR on Windows
+## Project Information
 
-Open CMD, PowerShell, or IntelliJ terminal inside the project folder:
+Application name:
+
+```text
+AvengersFC / Coffee Feedback API
+```
+
+JAR file name:
+
+```text
+AvengersFC-0.0.1.jar
+```
+
+Oracle Linux username:
+
+```text
+sulaiman
+```
+
+Oracle Linux VM IP after changing to Bridged Adapter:
+
+```text
+192.168.100.246
+```
+
+API base URL on Oracle Linux:
+
+```text
+http://192.168.100.246:8080
+```
+
+Feedback endpoint:
+
+```text
+http://192.168.100.246:8080/feedback
+```
+
+---
+
+## 1. Build the Spring Boot JAR on Windows
+
+From the Spring Boot project folder, run:
 
 ```bash
 mvn clean package
 ```
 
-After the build finishes, the JAR file will be created inside the `target` folder.
+After the build finishes, the JAR file is created inside the `target` folder.
 
-Example path:
+JAR path on Windows:
 
-```txt
+```text
 C:\Users\Codeline\Documents\GitHub\AvengersFC\target\AvengersFC-0.0.1.jar
 ```
 
 ---
 
-## Step 2: Check Java on Oracle Linux
+## 2. Check Java on Oracle Linux
 
-Connect to Oracle Linux and run:
+Inside Oracle Linux, check if Java is installed:
 
 ```bash
 java -version
@@ -36,7 +76,7 @@ If Java is not installed, install Java 17:
 sudo dnf install -y java-17-openjdk
 ```
 
-Check again:
+Check Java again:
 
 ```bash
 java -version
@@ -44,7 +84,7 @@ java -version
 
 ---
 
-## Step 3: Enable SSH on Oracle Linux
+## 3. Enable SSH on Oracle Linux
 
 Check SSH service:
 
@@ -52,7 +92,7 @@ Check SSH service:
 sudo systemctl status sshd
 ```
 
-If SSH is not running:
+If SSH is not running, start and enable it:
 
 ```bash
 sudo systemctl start sshd
@@ -61,80 +101,64 @@ sudo systemctl enable sshd
 
 ---
 
-## Step 4: Configure VirtualBox Port Forwarding for SSH
+## 4. Transfer the JAR to Oracle Linux
 
-Because the Oracle Linux VM uses NAT networking and the VM IP is usually like:
+The JAR was transferred from Windows to Oracle Linux using PSCP.
 
-```txt
-10.0.2.15
-```
+When the VM was using NAT, SSH port forwarding was used:
 
-Windows cannot connect directly to that IP. So VirtualBox port forwarding is used.
-
-Go to:
-
-```txt
-VirtualBox → Select VM → Settings → Network → Adapter 1 → Advanced → Port Forwarding
-```
-
-Add this rule:
-
-```txt
-Name: SSH
-Protocol: TCP
+```text
 Host IP: 127.0.0.1
 Host Port: 2222
 Guest IP: 10.0.2.15
 Guest Port: 22
 ```
 
-Then connect with PuTTY:
-
-```txt
-Host Name: 127.0.0.1
-Port: 2222
-Connection type: SSH
-```
-
-Login with the Oracle Linux username and password.
-
----
-
-## Step 5: Transfer the JAR to Oracle Linux
-
-Run this command from **Windows CMD**, not inside Oracle Linux:
+PSCP command from Windows CMD:
 
 ```cmd
 pscp -P 2222 "C:\Users\Codeline\Documents\GitHub\AvengersFC\target\AvengersFC-0.0.1.jar" sulaiman@127.0.0.1:/home/sulaiman/
 ```
 
-After transfer, go to PuTTY and check the file:
+Important:
+
+```text
+Run PSCP from Windows CMD, not inside Oracle Linux.
+```
+
+---
+
+## 5. Confirm the JAR Exists on Oracle Linux
+
+Inside Oracle Linux:
 
 ```bash
 cd /home/sulaiman
 ls -la
 ```
 
-You should see:
+Expected file:
 
-```txt
+```text
 AvengersFC-0.0.1.jar
 ```
 
 ---
 
-## Step 6: Run the JAR on Oracle Linux
+## 6. Run the JAR on Oracle Linux
 
-Inside Oracle Linux:
+Run the application:
 
 ```bash
 cd /home/sulaiman
 java -jar AvengersFC-0.0.1.jar
 ```
 
-If successful, the terminal should show something like:
+If successful, Spring Boot should show that Tomcat started on port `8080`.
 
-```txt
+Example:
+
+```text
 Tomcat started on port 8080
 Started AvengersFcApplication
 ```
@@ -143,21 +167,74 @@ At this point, the API is running on Oracle Linux.
 
 ---
 
-## Step 7: Test the API Locally on Oracle Linux
+## 7. Change VirtualBox Network to Bridged Adapter
 
-Open a second PuTTY session and run:
+The VirtualBox network was changed from NAT to:
+
+```text
+Bridged Adapter
+```
+
+After changing to Bridged Adapter, Oracle Linux received this IP:
+
+```text
+192.168.100.246
+```
+
+The IP was checked using:
+
+```bash
+ifconfig
+```
+
+Output included:
+
+```text
+inet 192.168.100.246
+```
+
+After using Bridged Adapter, PuTTY can connect directly using:
+
+```text
+Host Name: 192.168.100.246
+Port: 22
+```
+
+---
+
+## 8. Open Port 8080 in Oracle Linux Firewall
+
+To allow Windows/Postman to access the API, port `8080` was opened:
+
+```bash
+sudo firewall-cmd --add-port=8080/tcp --permanent
+sudo firewall-cmd --reload
+```
+
+Expected result:
+
+```text
+success
+success
+```
+
+---
+
+## 9. Test the API Inside Oracle Linux
+
+Open a second terminal or PuTTY session and test:
 
 ```bash
 curl http://localhost:8080/feedback
 ```
 
-Expected response:
+Expected response if there is no data:
 
 ```json
 []
 ```
 
-Test POST:
+Test creating feedback:
 
 ```bash
 curl -X POST http://localhost:8080/feedback \
@@ -174,23 +251,65 @@ Expected response:
 }
 ```
 
-This confirms that the API is accessible locally after deployment.
+---
+
+## 10. Test the API from Windows/Postman
+
+Because the VM is using Bridged Adapter, Windows can access the API using the Oracle Linux IP.
+
+Base URL:
+
+```text
+http://192.168.100.246:8080
+```
+
+### GET all feedback
+
+```text
+GET http://192.168.100.246:8080/feedback
+```
+
+### POST create feedback
+
+```text
+POST http://192.168.100.246:8080/feedback
+```
+
+Header:
+
+```text
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "content": "The espresso tastes too bitter."
+}
+```
+
+Expected status:
+
+```text
+201 Created
+```
 
 ---
 
-## Step 8: Keep the API Running After Terminal Closure
+## 11. Keep the API Running After Terminal Closure
 
-If the app was started using:
+If the app is started like this:
 
 ```bash
 java -jar AvengersFC-0.0.1.jar
 ```
 
-it will stop when the terminal is closed.
+it stops when the terminal closes.
 
-To keep it running in the background, stop the app first:
+To keep it running in the background, stop the current app first:
 
-```txt
+```text
 Ctrl + C
 ```
 
@@ -206,7 +325,7 @@ Check that the app is running:
 ps aux | grep AvengersFC
 ```
 
-View logs:
+Check logs:
 
 ```bash
 tail -f app.log
@@ -218,77 +337,45 @@ Stop the app if needed:
 pkill -f AvengersFC-0.0.1.jar
 ```
 
-Now the API remains running even after closing PuTTY.
-
 ---
 
-## Step 9: Test from Windows Postman
+## 12. Deployment Status
 
-To test from Windows Postman, add another VirtualBox port forwarding rule.
+The Coffee Feedback API was deployed successfully on Oracle Linux.
 
-Go to:
+Completed:
 
-```txt
-VirtualBox → Select VM → Settings → Network → Adapter 1 → Advanced → Port Forwarding
-```
-
-Add:
-
-```txt
-Name: SpringBoot
-Protocol: TCP
-Host IP: 127.0.0.1
-Host Port: 8080
-Guest IP: 10.0.2.15
-Guest Port: 8080
-```
-
-Then use this URL in Postman:
-
-```txt
-http://127.0.0.1:8080/feedback
-```
-
-Example POST request:
-
-```http
-POST http://127.0.0.1:8080/feedback
-Content-Type: application/json
-```
-
-Body:
-
-```json
-{
-  "content": "The espresso tastes too bitter."
-}
+```text
+Java installed on Oracle Linux
+Spring Boot JAR built using Maven
+JAR transferred to Oracle Linux
+Application runs on Oracle Linux
+Port 8080 opened in firewall
+VirtualBox network changed to Bridged Adapter
+Oracle Linux VM IP is 192.168.100.246
+API accessible from Oracle Linux using localhost
+API accessible from Windows/Postman using 192.168.100.246
+API can remain running after terminal closure using nohup
 ```
 
 ---
 
-# Deployment Acceptance Criteria Checklist
+## Important Note
 
-| Requirement | Status |
-|---|---|
-| Java installed on Oracle Linux | Done |
-| Spring Boot JAR created | Done |
-| JAR transferred to Oracle Linux | Done |
-| Application runs successfully on Oracle Linux | Done |
-| API is accessible locally after deployment | Done |
-| API tested using curl/Postman | Done |
-| Application remains running after terminal closure using nohup | Done |
-| Deployment steps documented | Done |
-| No database used | Done |
-| Content-Type uses application/json | Done |
+This is a local Oracle Linux VM deployment for testing.
+
+This URL:
+
+```text
+http://192.168.100.246:8080/feedback
+```
+
+works only from the same local network.
+
+It is not a public internet deployment.
 
 ---
 
+## Final Summary
 
-
-# Notes
-
-- This API uses in-memory storage only.
-- No database is required.
-- Docker is not required for this task.
-- If the app restarts, feedback data will be lost.
-- This behavior is expected because the project requirement says to use in-memory storage only.
+The Coffee Feedback API was deployed on an Oracle Linux VM. The Spring Boot JAR file was built using Maven, transferred to Oracle Linux, and executed using Java. The VirtualBox network was changed to Bridged Adapter, allowing the API to be accessed from Windows/Postman using the Oracle Linux IP address. Port `8080` was opened in the firewall, and the API can be kept running in the background using `nohup`.
