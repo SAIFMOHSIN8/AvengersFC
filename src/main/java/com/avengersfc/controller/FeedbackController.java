@@ -8,20 +8,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/feedback")
 public class FeedbackController {
 
     private List<Feedback> feedbackList = new ArrayList<>();
-    private int currentId = 1;
+    private String currentId;
 
     @PostMapping
     public Feedback createFeedback(@RequestBody Feedback feedback) {
 
         feedback.setId(currentId);
 
-        currentId++;
+        currentId= UUID.randomUUID().toString();
 
         feedbackList.add(feedback);
 
@@ -35,7 +37,7 @@ public class FeedbackController {
     }
 
     @GetMapping(path = "/{id}")
-    public Feedback getFeedbackByID(@PathVariable int id) {
+    public Feedback getFeedbackByID(@PathVariable String id) {
         for (Feedback feedback : feedbackList) {
             if (feedback.getId() == id) {
                 return feedback;
@@ -46,7 +48,7 @@ public class FeedbackController {
 
     // Delete end point
     @DeleteMapping(path ="{id}")
-    public void deleteFeedbackByID(@PathVariable int id) {
-        feedbackList.removeIf(feedback -> feedback.getId() == id);
+    public void deleteFeedbackByID(@PathVariable String id) {
+        feedbackList.removeIf(feedback -> Objects.equals(feedback.getId(), id));
     }
 }
