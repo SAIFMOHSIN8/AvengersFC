@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.avengersfc</groupId>
 	<artifactId>AvengersFC</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>AvengersFC</name>
 	<description/>
 	<url/>
