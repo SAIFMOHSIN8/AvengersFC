@@ -1,10 +1,8 @@
 package com.avengersfc.controller;
 
 import com.avengersfc.model.Feedback;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +37,7 @@ public class FeedbackController {
     @GetMapping(path = "/{id}")
     public Feedback getFeedbackByID(@PathVariable String id) {
         for (Feedback feedback : feedbackList) {
-            if (feedback.getId() == id) {
+            if (feedback.getId().equals(id)) { // Corrected comparison
                 return feedback;
             }
         }
@@ -50,5 +48,21 @@ public class FeedbackController {
     @DeleteMapping(path ="{id}")
     public void deleteFeedbackByID(@PathVariable String id) {
         feedbackList.removeIf(feedback -> Objects.equals(feedback.getId(), id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Feedback> updateFeedback(@PathVariable String id, @RequestBody Feedback updatedFeedback) {
+        if (updatedFeedback.getContent() == null || updatedFeedback.getContent().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        for (int i = 0; i < feedbackList.size(); i++) {
+            Feedback feedback = feedbackList.get(i);
+            if (feedback.getId().equals(id)) {
+                feedback.setContent(updatedFeedback.getContent());
+                return ResponseEntity.ok(feedback);
+            }
+        }
+        return ResponseEntity.notFound().build();
     }
 }
