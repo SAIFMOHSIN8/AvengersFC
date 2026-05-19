@@ -1,68 +1,71 @@
 package com.avengersfc.controller;
 
 import com.avengersfc.model.Feedback;
+import com.avengersfc.service.FeedbackService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.net.URI;
 import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/feedback")
+@RequestMapping(path = "/feedback", produces = MediaType.APPLICATION_JSON_VALUE)
 public class FeedbackController {
 
-    private List<Feedback> feedbackList = new ArrayList<>();
-    private String currentId;
+    private final FeedbackService feedbackService;
 
-    @PostMapping
-    public Feedback createFeedback(@RequestBody Feedback feedback) {
+    public FeedbackController(FeedbackService feedbackService) {
+        this.feedbackService = feedbackService;
+    }
 
-        feedback.setId(currentId);
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Feedback> createFeedback(@RequestBody Feedback feedback) {
+        if (feedback.getContent() == null || feedback.getContent().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        currentId= UUID.randomUUID().toString();
-
-        feedbackList.add(feedback);
-
-        return feedback;
+        Feedback createdFeedback = feedbackService.createFeedback(feedback);
+        return ResponseEntity
+                .created(URI.create("/feedback/" + createdFeedback.getId()))
+                .body(createdFeedback);
     }
 
 
     @GetMapping
     public List<Feedback> getAllFeedbacks() {
-        return feedbackList;
+        return feedbackService.getAllFeedbacks();
     }
 
     @GetMapping(path = "/{id}")
-    public Feedback getFeedbackByID(@PathVariable String id) {
-        for (Feedback feedback : feedbackList) {
-            if (feedback.getId().equals(id)) { // Corrected comparison
-                return feedback;
-            }
+    public ResponseEntity<Feedback> getFeedbackByID(@PathVariable String id) {
+        Feedback feedback = feedbackService.getFeedbackById(id);
+        if (feedback == null) {
+            return ResponseEntity.notFound().build();
         }
-        return null;
+        return ResponseEntity.ok(feedback);
     }
 
     // Delete end point
-    @DeleteMapping(path ="{id}")
-    public void deleteFeedbackByID(@PathVariable String id) {
-        feedbackList.removeIf(feedback -> Objects.equals(feedback.getId(), id));
+    @DeleteMapping(path = "/{id}")
+    public ResponseEntity<Void> deleteFeedbackByID(@PathVariable String id) {
+        boolean deleted = feedbackService.deleteFeedbackById(id);
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Feedback> updateFeedback(@PathVariable String id, @RequestBody Feedback updatedFeedback) {
         if (updatedFeedback.getContent() == null || updatedFeedback.getContent().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
 
-        for (int i = 0; i < feedbackList.size(); i++) {
-            Feedback feedback = feedbackList.get(i);
-            if (feedback.getId().equals(id)) {
-                feedback.setContent(updatedFeedback.getContent());
-                return ResponseEntity.ok(feedback);
-            }
+        Feedback feedback = feedbackService.updateFeedback(id, updatedFeedback);
+        if (feedback == null) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(feedback);
     }
 }
