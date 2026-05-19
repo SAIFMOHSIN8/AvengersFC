@@ -10,12 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
+@RequestMapping("/feedback")
 public class FeedbackController {
 
     private List<Feedback> feedbackList = new ArrayList<>();
     private int currentId = 1;
 
-    @PostMapping("/feedback")
+    @PostMapping
     public Feedback createFeedback(@RequestBody Feedback feedback) {
 
         feedback.setId(currentId);
@@ -28,12 +29,12 @@ public class FeedbackController {
     }
 
 
-    @GetMapping("/feedback")
+    @GetMapping
     public List<Feedback> getAllFeedbacks() {
         return feedbackList;
     }
 
-    @GetMapping("/feedback/{id}")
+    @GetMapping(path = "/{id}")
     public Feedback getFeedbackByID(@PathVariable int id) {
         for (Feedback feedback : feedbackList) {
             if (feedback.getId() == id) {
@@ -41,5 +42,11 @@ public class FeedbackController {
             }
         }
         return null;
+    }
+
+    // Delete end point
+    @DeleteMapping(path ="{id}")
+    public void deleteFeedbackByID(@PathVariable int id) {
+        feedbackList.removeIf(feedback -> feedback.getId() == id);
     }
 }
