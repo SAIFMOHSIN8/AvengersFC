@@ -2,6 +2,9 @@ package com.avengersfc.controller;
 
 import com.avengersfc.model.Feedback;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +26,7 @@ public class FeedbackController {
 
         return feedback;
     }
+
 
     @GetMapping("/feedback")
     public List<Feedback> getAllFeedbacks() {
